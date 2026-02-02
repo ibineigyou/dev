@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ウォーターフォールモデル 成果物学習システム</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2332;
+            --bg-hover: #243044;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-pink: #ec4899;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #2d3a4f;
+            --glow-blue: rgba(59, 130, 246, 0.3);
+            --glow-cyan: rgba(6, 182, 212, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            top: -25%;
+            left: -25%;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 60%);
+            animation: bgPulse 20s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        /* Grid Pattern */
+        .grid-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(180deg, var(--bg-secondary) 0%, transparent 100%);
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .logo::before, .logo::after {
+            content: '';
+            width: 30px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan));
+        }
+
+        .logo::after {
+            background: linear-gradient(90deg, var(--accent-cyan), transparent);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-cyan) 50%, var(--accent-blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            max-width: 600px;
+            margin: 1.5rem auto 0;
+            padding: 0 1rem;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-card);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+            border-radius: 2px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 20px var(--glow-cyan);
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            flex-wrap: wrap;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .nav-btn:hover::before {
+            left: 100%;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(6, 182, 212, 0.2);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 4px 20px var(--glow-blue);
+        }
+
+        /* Main Container */
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Section */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Section Title */
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-title .icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        /* Matrix Table */
+        .matrix-container {
+            overflow-x: auto;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            margin-bottom: 2rem;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .matrix-table th {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-card));
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent-blue);
+            white-space: nowrap;
+        }
+
+        .matrix-table th:first-child {
+            border-radius: 16px 0 0 0;
+        }
+
+        .matrix-table th:last-child {
+            border-radius: 0 16px 0 0;
+        }
+
+        .matrix-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+            line-height: 1.8;
+        }
+
+        .matrix-table tr:hover td {
+            background: var(--bg-hover);
+        }
+
+        .matrix-table tr:last-child td:first-child {
+            border-radius: 0 0 0 16px;
+        }
+
+        .matrix-table tr:last-child td:last-child {
+            border-radius: 0 0 16px 0;
+        }
+
+        .phase-cell {
+            font-weight: 700;
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+
+        .phase-basic { color: var(--accent-cyan); }
+        .phase-detail { color: var(--accent-blue); }
+        .phase-unit { color: var(--accent-green); }
+        .phase-integration { color: var(--accent-purple); }
+
+        .item-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            margin: 0.15rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .item-tag:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px var(--glow-blue);
+        }
+
+        .card-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-hover));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .card-list {
+            margin-top: 1rem;
+            padding-left: 1rem;
+        }
+
+        .card-list li {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .card-list li::before {
+            content: '▸';
+            position: absolute;
+            left: -1rem;
+            color: var(--accent-cyan);
+        }
+
+        /* Quiz Section */
+        .quiz-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .quiz-counter {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .quiz-score {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        .question {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option {
+            padding: 1rem 1.5rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            text-align: left;
+            font-family: inherit;
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-blue);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .option:hover {
+            border-color: var(--accent-blue);
+            background: var(--bg-hover);
+        }
+
+        .option:hover::before {
+            transform: scaleY(1);
+        }
+
+        .option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .option.correct::before {
+            background: var(--accent-green);
+            transform: scaleY(1);
+        }
+
+        .option.wrong {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .option.wrong::before {
+            background: #ef4444;
+            transform: scaleY(1);
+        }
+
+        .option:disabled {
+            cursor: not-allowed;
+        }
+
+        .explanation {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border-left: 4px solid var(--accent-cyan);
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .explanation h4 {
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .explanation p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .quiz-nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .quiz-btn {
+            padding: 0.875rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-btn.primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+        }
+
+        .quiz-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--glow-blue);
+        }
+
+        .quiz-btn.secondary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .quiz-btn.secondary:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .quiz-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Flowchart */
+        .flowchart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem;
+        }
+
+        .flow-phase {
+            width: 100%;
+            max-width: 600px;
+            padding: 1.5rem 2rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .flow-phase:hover {
+            transform: scale(1.02);
+            border-color: var(--accent-blue);
+            box-shadow: 0 10px 40px rgba(59, 130, 246, 0.2);
+        }
+
+        .flow-phase.active {
+            border-color: var(--accent-cyan);
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-hover));
+        }
+
+        .flow-phase h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-phase p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .flow-arrow {
+            width: 2px;
+            height: 30px;
+            background: linear-gradient(180deg, var(--accent-cyan), var(--accent-blue));
+            position: relative;
+        }
+
+        .flow-arrow::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid var(--accent-blue);
+        }
+
+        /* Detail Panel */
+        .detail-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .detail-panel.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .detail-panel h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .detail-item {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .detail-item h4 {
+            font-size: 0.875rem;
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Results */
+        .results {
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+
+        .results-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .results h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .results-score {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .results p {
+            color: var(--text-secondary);
+            margin: 1rem 0 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            nav {
+                gap: 0.25rem;
+                padding: 0.75rem;
+            }
+
+            .nav-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.75rem;
+            }
+
+            main {
+                padding: 1rem;
+            }
+
+            .matrix-table {
+                font-size: 0.75rem;
+            }
+
+            .matrix-table th,
+            .matrix-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .question {
+                font-size: 1rem;
+            }
+
+            .option {
+                padding: 0.875rem 1rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-blue);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="grid-pattern"></div>
+
+    <header>
+        <div class="logo">WATERFALL MODEL</div>
+        <h1>成果物学習システム</h1>
+        <p class="subtitle">ウォーターフォールモデルの設計・成果物を体系的に学習</p>
+        
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">
+                <span>学習進捗</span>
+                <span id="progressPercent">0%</span>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" data-section="overview">📋 概要</button>
+        <button class="nav-btn" data-section="matrix">📊 マトリクス</button>
+        <button class="nav-btn" data-section="common">📁 共通設計書</button>
+        <button class="nav-btn" data-section="method">⚙️ 方式設計書</button>
+        <button class="nav-btn" data-section="diagram">📐 ダイアグラム</button>
+        <button class="nav-btn" data-section="quiz">✏️ 確認テスト</button>
+    </nav>
+
+    <main>
+        <!-- Overview Section -->
+        <section class="section active" id="overview">
+            <div class="section-title">
+                <div class="icon">📋</div>
+                <span>ウォーターフォールモデル概要</span>
+            </div>
+
+            <div class="flowchart">
+                <div class="flow-phase" data-phase="requirements" onclick="showPhaseDetail(this)">
+                    <h3>📝 要件定義</h3>
+                    <p>システム要件の明確化・文書化</p>
+                </div>
+                <div class="flow-arrow"></div>
+                <div class="flow-phase" data-phase="basic" onclick="showPhaseDetail(this)">
+                    <h3>🎨 基本設計</h3>
+                    <p>システム全体の設計・アーキテクチャ決定</p>
+                </div>
+                <div class="flow-arrow"></div>
+                <div class="flow-phase" data-phase="detail" onclick="showPhaseDetail(this)">
+                    <h3>🔧 詳細設計</h3>
+                    <p>各機能の詳細な設計・定義</p>
+                </div>
+                <div class="flow-arrow"></div>
+                <div class="flow-phase" data-phase="development" onclick="showPhaseDetail(this)">
+                    <h3>💻 製造</h3>
+                    <p>プログラミング・実装</p>
+                </div>
+                <div class="flow-arrow"></div>
+                <div class="flow-phase" data-phase="unit" onclick="showPhaseDetail(this)">
+                    <h3>🧪 単体テスト</h3>
+                    <p>個別モジュールのテスト</p>
+                </div>
+                <div class="flow-arrow"></div>
+                <div class="flow-phase" data-phase="integration" onclick="showPhaseDetail(this)">
+                    <h3>🔗 結合テスト</h3>
+                    <p>モジュール間連携のテスト</p>
+                </div>
+            </div>
+
+            <div class="detail-panel" id="phaseDetail">
+                <h3 id="phaseTitle">工程詳細</h3>
+                <p id="phaseDescription"></p>
+                <div class="detail-grid" id="phaseItems"></div>
+            </div>
+        </section>
+
+        <!-- Matrix Section -->
+        <section class="section" id="matrix">
+            <div class="section-title">
+                <div class="icon">📊</div>
+                <span>総合成果物マトリクス</span>
+            </div>
+
+            <div class="matrix-container">
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th>工程</th>
+                            <th>画面</th>
+                            <th>ロジック・イベント</th>
+                            <th>DB・API(I/F)</th>
+                            <th>ダイアグラム・UML</th>
+                            <th>共通設計書</th>
+                            <th>方式設計書</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="phase-cell phase-basic">基本設計</td>
+                            <td>
+                                <span class="item-tag">画面一覧</span>
+                                <span class="item-tag">画面遷移図</span>
+                                <span class="item-tag">画面レイアウト</span>
+                                <span class="item-tag">UI方針書</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">機能一覧</span>
+                                <span class="item-tag">機能概要説明書</span>
+                                <span class="item-tag">業務フロー図</span>
+                                <span class="item-tag">処理概要図</span>
+                                <span class="item-tag">非機能要件定義書</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">ER図（概念）</span>
+                                <span class="item-tag">テーブル一覧</span>
+                                <span class="item-tag">外部I/F一覧</span>
+                                <span class="item-tag">API一覧</span>
+                                <span class="item-tag">データフロー図</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">ユースケース図</span>
+                                <span class="item-tag">アクティビティ図</span>
+                                <span class="item-tag">コンテキスト図</span>
+                                <span class="item-tag">システム構成図</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">用語定義書</span>
+                                <span class="item-tag">コーディング規約</span>
+                                <span class="item-tag">命名規則書</span>
+                                <span class="item-tag">ドキュメント標準</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">システム方式設計書</span>
+                                <span class="item-tag">アーキテクチャ設計書</span>
+                                <span class="item-tag">インフラ方式設計書</span>
+                                <span class="item-tag">セキュリティ方式設計書</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="phase-cell phase-detail">詳細設計</td>
+                            <td>
+                                <span class="item-tag">画面項目定義書</span>
+                                <span class="item-tag">画面レイアウト（詳細）</span>
+                                <span class="item-tag">入力チェック仕様書</span>
+                                <span class="item-tag">メッセージ定義書</span>
+                                <span class="item-tag">権限定義書</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">処理詳細設計書</span>
+                                <span class="item-tag">イベント定義書</span>
+                                <span class="item-tag">状態遷移定義書</span>
+                                <span class="item-tag">共通部品設計書</span>
+                                <span class="item-tag">バッチ処理定義書</span>
+                                <span class="item-tag">例外処理定義書</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">ER図（物理）</span>
+                                <span class="item-tag">テーブル定義書</span>
+                                <span class="item-tag">インデックス定義書</span>
+                                <span class="item-tag">API仕様書</span>
+                                <span class="item-tag">I/Fレイアウト定義書</span>
+                                <span class="item-tag">コード定義書</span>
+                                <span class="item-tag">データ移行定義書</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">クラス図</span>
+                                <span class="item-tag">シーケンス図</span>
+                                <span class="item-tag">状態遷移図</span>
+                                <span class="item-tag">コンポーネント図</span>
+                                <span class="item-tag">配置図</span>
+                                <span class="item-tag">パッケージ図</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">共通部品仕様書</span>
+                                <span class="item-tag">ログ出力仕様書</span>
+                                <span class="item-tag">エラーハンドリング仕様書</span>
+                                <span class="item-tag">認証・認可仕様書</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">画面方式設計書</span>
+                                <span class="item-tag">帳票方式設計書</span>
+                                <span class="item-tag">バッチ方式設計書</span>
+                                <span class="item-tag">DB方式設計書</span>
+                                <span class="item-tag">API方式設計書</span>
+                                <span class="item-tag">ログ方式設計書</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="phase-cell phase-unit">単体テスト</td>
+                            <td>
+                                <span class="item-tag">画面単体テスト仕様書</span>
+                                <span class="item-tag">画面単体テスト結果報告書</span>
+                                <span class="item-tag">エビデンス</span>
+                                <span class="item-tag">障害管理表</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">ロジック単体テスト仕様書</span>
+                                <span class="item-tag">単体テスト結果報告書</span>
+                                <span class="item-tag">カバレッジレポート</span>
+                                <span class="item-tag">障害管理表</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">DB単体テスト仕様書</span>
+                                <span class="item-tag">SQL実行結果</span>
+                                <span class="item-tag">API単体テスト仕様書</span>
+                                <span class="item-tag">APIテスト結果報告書</span>
+                                <span class="item-tag">障害管理表</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">テストケースフロー図</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">テスト方針書</span>
+                                <span class="item-tag">テスト環境定義書</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">単体テスト方式設計書</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="phase-cell phase-integration">結合テスト</td>
+                            <td>
+                                <span class="item-tag">画面結合テスト仕様書</span>
+                                <span class="item-tag">画面結合テスト結果報告書</span>
+                                <span class="item-tag">エビデンス</span>
+                                <span class="item-tag">障害管理表</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">機能間結合テスト仕様書</span>
+                                <span class="item-tag">結合テスト結果報告書</span>
+                                <span class="item-tag">障害管理表</span>
+                                <span class="item-tag">課題管理表</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">DB結合テスト仕様書</span>
+                                <span class="item-tag">I/F結合テスト仕様書</span>
+                                <span class="item-tag">結合テスト結果報告書</span>
+                                <span class="item-tag">性能テスト結果報告書</span>
+                                <span class="item-tag">障害管理表</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">結合テストシーケンス図</span>
+                                <span class="item-tag">I/Fフロー図</span>
+                                <span class="item-tag">テスト構成図</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">結合テスト計画書</span>
+                                <span class="item-tag">テストデータ仕様書</span>
+                            </td>
+                            <td>
+                                <span class="item-tag">結合テスト方式設計書</span>
+                                <span class="item-tag">性能テスト方式設計書</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Common Design Section -->
+        <section class="section" id="common">
+            <div class="section-title">
+                <div class="icon">📁</div>
+                <span>共通設計書</span>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">📖</div>
+                    <h3>用語定義書</h3>
+                    <p>プロジェクト共通用語を定義し、コミュニケーションの齟齬を防止します。</p>
+                    <ul class="card-list">
+                        <li>用語ID・用語名（日/英）</li>
+                        <li>略語・定義・説明</li>
+                        <li>使用例・関連用語</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">💻</div>
+                    <h3>コーディング規約</h3>
+                    <p>ソースコードの記述ルールを定義し、品質と保守性を向上させます。</p>
+                    <ul class="card-list">
+                        <li>インデント・行の長さ</li>
+                        <li>命名規則（クラス、メソッド、変数）</li>
+                        <li>コメント・禁止事項</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🏷️</div>
+                    <h3>命名規則書</h3>
+                    <p>各種名称の命名ルールを定義し、一貫性を確保します。</p>
+                    <ul class="card-list">
+                        <li>テーブル名・カラム名</li>
+                        <li>クラス名・メソッド名</li>
+                        <li>ファイル名・API名</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">📝</div>
+                    <h3>ドキュメント標準</h3>
+                    <p>ドキュメント作成ルールを定義し、品質を均一化します。</p>
+                    <ul class="card-list">
+                        <li>フォーマット・記載項目</li>
+                        <li>レビュー観点・承認フロー</li>
+                        <li>版管理ルール</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🧩</div>
+                    <h3>共通部品仕様書</h3>
+                    <p>共通利用機能の仕様を定義し、再利用性を高めます。</p>
+                    <ul class="card-list">
+                        <li>機能概要・I/F仕様</li>
+                        <li>利用方法・制約事項</li>
+                        <li>サンプルコード</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">📋</div>
+                    <h3>ログ出力仕様書</h3>
+                    <p>ログ出力ルールを定義し、運用・障害対応を容易にします。</p>
+                    <ul class="card-list">
+                        <li>ログレベル（FATAL〜TRACE）</li>
+                        <li>フォーマット・出力タイミング</li>
+                        <li>保存期間・ローテーション</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">⚠️</div>
+                    <h3>エラーハンドリング仕様書</h3>
+                    <p>エラー処理の共通ルールを定義し、堅牢性を確保します。</p>
+                    <ul class="card-list">
+                        <li>エラー分類・処理方針</li>
+                        <li>メッセージ体系</li>
+                        <li>リトライ方針</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🔐</div>
+                    <h3>認証・認可仕様書</h3>
+                    <p>認証・認可の共通仕様を定義し、セキュリティを確保します。</p>
+                    <ul class="card-list">
+                        <li>認証方式・トークン管理</li>
+                        <li>権限モデル</li>
+                        <li>セッション管理</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Method Design Section -->
+        <section class="section" id="method">
+            <div class="section-title">
+                <div class="icon">⚙️</div>
+                <span>方式設計書</span>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">🏗️</div>
+                    <h3>システム方式設計書</h3>
+                    <p>システム全体の方式を定義します。</p>
+                    <ul class="card-list">
+                        <li>システム構成・処理方式</li>
+                        <li>データ方式・連携方式</li>
+                        <li>運用方式・非機能要件対応</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🎯</div>
+                    <h3>アーキテクチャ設計書</h3>
+                    <p>システムアーキテクチャを定義します。</p>
+                    <ul class="card-list">
+                        <li>アーキテクチャパターン</li>
+                        <li>レイヤー構成・コンポーネント</li>
+                        <li>フレームワーク選定</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🖥️</div>
+                    <h3>画面方式設計書</h3>
+                    <p>画面実装の方式を定義します。</p>
+                    <ul class="card-list">
+                        <li>フレームワーク・状態管理</li>
+                        <li>共通レイアウト・遷移方式</li>
+                        <li>Ajax通信・入力検証方式</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🗄️</div>
+                    <h3>DB方式設計書</h3>
+                    <p>DB設計・アクセスの方式を定義します。</p>
+                    <ul class="card-list">
+                        <li>DBMS選定・接続方式</li>
+                        <li>トランザクション・ロック方式</li>
+                        <li>バックアップ・レプリケーション</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🔌</div>
+                    <h3>API方式設計書</h3>
+                    <p>API実装の方式を定義します。</p>
+                    <ul class="card-list">
+                        <li>RESTful設計・バージョニング</li>
+                        <li>認証・認可方式</li>
+                        <li>エラー応答・レート制限</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">⏰</div>
+                    <h3>バッチ方式設計書</h3>
+                    <p>バッチ処理の方式を定義します。</p>
+                    <ul class="card-list">
+                        <li>ジョブ管理・実行制御方式</li>
+                        <li>リラン方式・並列処理</li>
+                        <li>エラー処理・監視方式</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🛡️</div>
+                    <h3>セキュリティ方式設計書</h3>
+                    <p>セキュリティ対策の方式を定義します。</p>
+                    <ul class="card-list">
+                        <li>認証・暗号化方式</li>
+                        <li>脆弱性対策</li>
+                        <li>監査ログ</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🧪</div>
+                    <h3>テスト方式設計書</h3>
+                    <p>各種テストの方式を定義します。</p>
+                    <ul class="card-list">
+                        <li>テストフレームワーク</li>
+                        <li>モック方式・カバレッジ基準</li>
+                        <li>自動化・性能測定方式</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Diagram Section -->
+        <section class="section" id="diagram">
+            <div class="section-title">
+                <div class="icon">📐</div>
+                <span>ダイアグラム・UML</span>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">👤</div>
+                    <h3>ユースケース図</h3>
+                    <p>システムの機能とアクター（利用者）の関係を表現します。</p>
+                    <ul class="card-list">
+                        <li>作成工程：基本設計</li>
+                        <li>用途：機能要件の可視化</li>
+                        <li>要素：アクター、ユースケース、関係</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🔀</div>
+                    <h3>アクティビティ図</h3>
+                    <p>業務・処理フローを表現します。</p>
+                    <ul class="card-list">
+                        <li>作成工程：基本〜詳細設計</li>
+                        <li>用途：業務フローの可視化</li>
+                        <li>要素：アクション、分岐、並行処理</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">📦</div>
+                    <h3>クラス図</h3>
+                    <p>クラスの構造と関連を表現します。</p>
+                    <ul class="card-list">
+                        <li>作成工程：詳細設計</li>
+                        <li>用途：オブジェクト指向設計</li>
+                        <li>要素：クラス、属性、操作、関連</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">📨</div>
+                    <h3>シーケンス図</h3>
+                    <p>オブジェクト間の相互作用を時系列で表現します。</p>
+                    <ul class="card-list">
+                        <li>作成工程：詳細設計</li>
+                        <li>用途：処理フローの詳細化</li>
+                        <li>要素：ライフライン、メッセージ、活性区間</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🔄</div>
+                    <h3>状態遷移図</h3>
+                    <p>オブジェクトの状態変化を表現します。</p>
+                    <ul class="card-list">
+                        <li>作成工程：詳細設計</li>
+                        <li>用途：状態管理の設計</li>
+                        <li>要素：状態、遷移、イベント</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🗃️</div>
+                    <h3>ER図</h3>
+                    <p>データベースの構造を表現します。</p>
+                    <ul class="card-list">
+                        <li>作成工程：基本〜詳細設計</li>
+                        <li>用途：データモデリング</li>
+                        <li>要素：エンティティ、属性、関係</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🧱</div>
+                    <h3>コンポーネント図</h3>
+                    <p>システムのコンポーネント構成を表現します。</p>
+                    <ul class="card-list">
+                        <li>作成工程：詳細設計</li>
+                        <li>用途：モジュール構成の設計</li>
+                        <li>要素：コンポーネント、インターフェース</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">🖧</div>
+                    <h3>配置図</h3>
+                    <p>物理的な配置構成を表現します。</p>
+                    <ul class="card-list">
+                        <li>作成工程：詳細設計</li>
+                        <li>用途：インフラ構成の設計</li>
+                        <li>要素：ノード、アーティファクト、通信経路</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quiz Section -->
+        <section class="section" id="quiz">
+            <div class="section-title">
+                <div class="icon">✏️</div>
+                <span>確認テスト</span>
+            </div>
+
+            <div class="quiz-container" id="quizContainer">
+                <div class="quiz-header">
+                    <span class="quiz-counter">問題 <span id="currentQuestion">1</span> / <span id="totalQuestions">10</span></span>
+                    <div class="quiz-score">
+                        <span>🎯 スコア:</span>
+                        <span id="score">0</span>
+                    </div>
+                </div>
+
+                <div id="questionArea">
+                    <p class="question" id="questionText"></p>
+                    <div class="options" id="optionsContainer"></div>
+                </div>
+
+                <div class="explanation" id="explanation">
+                    <h4>💡 解説</h4>
+                    <p id="explanationText"></p>
+                </div>
+
+                <div class="quiz-nav">
+                    <button class="quiz-btn secondary" id="restartBtn" style="display: none;" onclick="restartQuiz()">🔄 最初から</button>
+                    <button class="quiz-btn primary" id="nextBtn" onclick="nextQuestion()" disabled>次の問題 →</button>
+                </div>
+            </div>
+
+            <div class="quiz-container results" id="resultsContainer" style="display: none;">
+                <div class="results-icon">🎉</div>
+                <h2>テスト完了！</h2>
+                <div class="results-score"><span id="finalScore">0</span>/<span id="finalTotal">10</span></div>
+                <p id="resultMessage"></p>
+                <div class="quiz-nav">
+                    <button class="quiz-btn primary" onclick="restartQuiz()">🔄 もう一度挑戦</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Phase Details Data
+        const phaseData = {
+            requirements: {
+                title: '📝 要件定義',
+                description: 'システムが満たすべき機能要件・非機能要件を明確化し、文書化する工程です。',
+                items: [
+                    { title: '要件定義書', desc: 'システム要件を詳細に記述' },
+                    { title: '機能要件一覧', desc: '機能要件を一覧化' },
+                    { title: '非機能要件一覧', desc: '性能、可用性等を定義' },
+                    { title: '用語集', desc: 'プロジェクト用語を定義' }
+                ]
+            },
+            basic: {
+                title: '🎨 基本設計',
+                description: 'システム全体のアーキテクチャ、画面・機能・DBの概要を設計する工程です。',
+                items: [
+                    { title: '画面一覧・画面遷移図', desc: '画面構成と遷移を設計' },
+                    { title: '機能一覧・業務フロー図', desc: '機能構成と業務フローを設計' },
+                    { title: 'ER図（概念）・テーブル一覧', desc: 'データ構造を概念レベルで設計' },
+                    { title: 'システム方式設計書', desc: 'システム全体の方式を定義' }
+                ]
+            },
+            detail: {
+                title: '🔧 詳細設計',
+                description: '基本設計を基に、各機能の詳細な設計・定義を行う工程です。',
+                items: [
+                    { title: '画面項目定義書', desc: '画面の項目詳細を定義' },
+                    { title: '処理詳細設計書', desc: '処理ロジックを詳細に設計' },
+                    { title: 'テーブル定義書・API仕様書', desc: 'DB・APIの詳細を定義' },
+                    { title: 'クラス図・シーケンス図', desc: 'オブジェクト設計を詳細化' }
+                ]
+            },
+            development: {
+                title: '💻 製造',
+                description: '詳細設計を基に、実際のプログラミング・実装を行う工程です。',
+                items: [
+                    { title: 'ソースコード', desc: 'プログラムの実装' },
+                    { title: 'コードレビュー記録', desc: 'レビュー結果を記録' },
+                    { title: '開発環境構築手順書', desc: '環境構築手順を文書化' },
+                    { title: 'ビルド・デプロイ手順書', desc: 'ビルド・デプロイ手順を文書化' }
+                ]
+            },
+            unit: {
+                title: '🧪 単体テスト',
+                description: '個別モジュール・機能が正しく動作するかを検証する工程です。',
+                items: [
+                    { title: '単体テスト仕様書', desc: 'テストケースを定義' },
+                    { title: '単体テスト結果報告書', desc: 'テスト結果を報告' },
+                    { title: 'カバレッジレポート', desc: 'コードカバレッジを測定' },
+                    { title: '障害管理表', desc: '検出障害を管理' }
+                ]
+            },
+            integration: {
+                title: '🔗 結合テスト',
+                description: 'モジュール間の連携が正しく動作するかを検証する工程です。',
+                items: [
+                    { title: '結合テスト仕様書', desc: '結合テストケースを定義' },
+                    { title: '結合テスト結果報告書', desc: 'テスト結果を報告' },
+                    { title: '性能テスト結果報告書', desc: '性能測定結果を報告' },
+                    { title: '障害管理表・課題管理表', desc: '障害・課題を管理' }
+                ]
+            }
+        };
+
+        // Quiz Data
+        const quizData = [
+            {
+                question: '基本設計工程で作成するER図の種類はどれですか？',
+                options: ['概念ER図', '物理ER図', '論理ER図', '実装ER図'],
+                correct: 0,
+                explanation: '基本設計では概念ER図を作成し、詳細設計で物理ER図を作成します。概念ER図ではエンティティ間の関係を抽象的に表現します。'
+            },
+            {
+                question: 'シーケンス図を主に作成する工程はどれですか？',
+                options: ['要件定義', '基本設計', '詳細設計', '単体テスト'],
+                correct: 2,
+                explanation: 'シーケンス図はオブジェクト間の相互作用を時系列で表現するもので、詳細設計工程で作成します。'
+            },
+            {
+                question: 'コーディング規約を定義する設計書の分類はどれですか？',
+                options: ['方式設計書', '共通設計書', '機能設計書', 'テスト設計書'],
+                correct: 1,
+                explanation: 'コーディング規約は共通設計書に分類され、プロジェクト全体で統一したコーディングルールを定義します。'
+            },
+            {
+                question: 'API仕様書で定義すべき項目として適切でないものはどれですか？',
+                options: ['エンドポイント', 'HTTPメソッド', '画面レイアウト', 'レスポンス形式'],
+                correct: 2,
+                explanation: 'API仕様書ではエンドポイント、HTTPメソッド、リクエスト/レスポンス形式、エラーコード等を定義します。画面レイアウトは画面設計書で定義します。'
+            },
+            {
+                question: 'ユースケース図の主な構成要素として正しい組み合わせはどれですか？',
+                options: ['クラス、属性、操作', 'アクター、ユースケース、関係', '状態、遷移、イベント', 'ノード、アーティファクト'],
+                correct: 1,
+                explanation: 'ユースケース図はアクター（利用者）、ユースケース（機能）、それらの関係で構成されます。'
+            },
+            {
+                question: 'バッチ方式設計書で定義すべき内容として適切でないものはどれですか？',
+                options: ['ジョブ管理方式', 'リラン方式', '画面遷移方式', '並列処理方式'],
+                correct: 2,
+                explanation: 'バッチ方式設計書ではジョブ管理、リラン方式、並列処理、エラー処理等を定義します。画面遷移方式は画面方式設計書で定義します。'
+            },
+            {
+                question: '障害管理表の必須項目として適切でないものはどれですか？',
+                options: ['障害ID', '発生日', '原因', '開発者の評価'],
+                correct: 3,
+                explanation: '障害管理表には障害ID、発生日、現象、原因、対応内容、担当者、ステータス等を記録します。開発者の主観的な評価は必須項目ではありません。'
+            },
+            {
+                question: 'テーブル定義書で定義する項目として適切でないものはどれですか？',
+                options: ['カラム名', 'データ型', '画面表示位置', 'NULL許可'],
+                correct: 2,
+                explanation: 'テーブル定義書ではカラム名、データ型、桁数、NULL許可、主キー、外部キー、デフォルト値等を定義します。画面表示位置は画面項目定義書で定義します。'
+            },
+            {
+                question: 'クラス図で表現できないものはどれですか？',
+                options: ['クラス間の継承関係', 'クラスの属性と操作', '処理の時系列的な流れ', 'クラス間の関連'],
+                correct: 2,
+                explanation: 'クラス図は静的な構造を表現するもので、処理の時系列的な流れはシーケンス図で表現します。'
+            },
+            {
+                question: '詳細設計工程で作成する方式設計書として適切でないものはどれですか？',
+                options: ['画面方式設計書', 'DB方式設計書', 'システム方式設計書', 'API方式設計書'],
+                correct: 2,
+                explanation: 'システム方式設計書は基本設計工程で作成します。詳細設計では画面方式、DB方式、API方式、バッチ方式等の具体的な方式設計書を作成します。'
+            }
+        ];
+
+        // State
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answered = false;
+        let visitedSections = new Set(['overview']);
+
+        // Navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const sectionId = this.dataset.section;
+                
+                // Update navigation
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update sections
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+                
+                // Track progress
+                visitedSections.add(sectionId);
+                updateProgress();
+            });
+        });
+
+        // Progress tracking
+        function updateProgress() {
+            const totalSections = document.querySelectorAll('.nav-btn').length;
+            const progress = (visitedSections.size / totalSections) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+        }
+
+        // Phase Detail
+        function showPhaseDetail(element) {
+            const phase = element.dataset.phase;
+            const data = phaseData[phase];
+            
+            // Remove active from all
+            document.querySelectorAll('.flow-phase').forEach(p => p.classList.remove('active'));
+            element.classList.add('active');
+            
+            // Update detail panel
+            document.getElementById('phaseTitle').innerHTML = data.title;
+            document.getElementById('phaseDescription').textContent = data.description;
+            
+            const itemsHtml = data.items.map(item => `
+                <div class="detail-item">
+                    <h4>${item.title}</h4>
+                    <p>${item.desc}</p>
+                </div>
+            `).join('');
+            document.getElementById('phaseItems').innerHTML = itemsHtml;
+            
+            document.getElementById('phaseDetail').classList.add('show');
+        }
+
+        // Quiz functions
+        function loadQuestion() {
+            const question = quizData[currentQuestionIndex];
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            document.getElementById('totalQuestions').textContent = quizData.length;
+            
+            const optionsHtml = question.options.map((option, index) => `
+                <button class="option" onclick="checkAnswer(${index})">${option}</button>
+            `).join('');
+            document.getElementById('optionsContainer').innerHTML = optionsHtml;
+            
+            document.getElementById('explanation').classList.remove('show');
+            document.getElementById('nextBtn').disabled = true;
+            answered = false;
+        }
+
+        function checkAnswer(selectedIndex) {
+            if (answered) return;
+            answered = true;
+            
+            const question = quizData[currentQuestionIndex];
+            const options = document.querySelectorAll('.option');
+            
+            options.forEach((option, index) => {
+                option.disabled = true;
+                if (index === question.correct) {
+                    option.classList.add('correct');
+                } else if (index === selectedIndex) {
+                    option.classList.add('wrong');
+                }
+            });
+            
+            if (selectedIndex === question.correct) {
+                score++;
+                document.getElementById('score').textContent = score;
+            }
+            
+            document.getElementById('explanationText').textContent = question.explanation;
+            document.getElementById('explanation').classList.add('show');
+            document.getElementById('nextBtn').disabled = false;
+            
+            if (currentQuestionIndex === quizData.length - 1) {
+                document.getElementById('nextBtn').textContent = '結果を見る →';
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex >= quizData.length) {
+                showResults();
+            } else {
+                loadQuestion();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('resultsContainer').style.display = 'block';
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalTotal').textContent = quizData.length;
+            
+            const percentage = (score / quizData.length) * 100;
+            let message = '';
+            if (percentage >= 90) {
+                message = '素晴らしい！ウォーターフォールモデルの理解が深いです。';
+            } else if (percentage >= 70) {
+                message = '良い結果です！もう少し復習すれば完璧です。';
+            } else if (percentage >= 50) {
+                message = 'まずまずの結果です。復習をおすすめします。';
+            } else {
+                message = '再度学習を行い、もう一度挑戦してみましょう。';
+            }
+            document.getElementById('resultMessage').textContent = message;
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            document.getElementById('score').textContent = '0';
+            document.getElementById('nextBtn').textContent = '次の問題 →';
+            document.getElementById('quizContainer').style.display = 'block';
+            document.getElementById('resultsContainer').style.display = 'none';
+            loadQuestion();
+        }
+
+        // Initialize
+        loadQuestion();
+        updateProgress();
+    </script>
+</body>
+</html>
